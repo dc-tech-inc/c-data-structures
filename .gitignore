@@ -1,0 +1,9 @@
+build*/
+*.o
+*.gcda
+*.gcno
+*.info
+/bin/
+.bin/
+compile_commands.json
+bench-results.md
