@@ -2,6 +2,7 @@
 #   make test                 build and run every unit test
 #   make test SAN=1           same, with AddressSanitizer + UndefinedBehaviorSanitizer
 #   make test CC=clang        pick the compiler
+#   make example              build and run examples/quickstart.c
 #   make bench                build and run the benchmarks (prints a Markdown table)
 #   make coverage             gcov/lcov line coverage of src/ (needs gcc, lcov)
 #   make valgrind             run the tests under valgrind (needs valgrind)
@@ -25,7 +26,7 @@ OBJ      := $(SRC:src/%.c=$(BUILD)/%.o)
 LIB      := $(BUILD)/libdcds.a
 TESTS    := $(patsubst tests/%.c,$(BUILD)/%,$(wildcard tests/test_*.c))
 
-.PHONY: all test bench coverage valgrind clean
+.PHONY: all test example bench coverage valgrind clean
 all: $(LIB)
 
 $(BUILD):
@@ -42,6 +43,12 @@ $(BUILD)/test_%: tests/test_%.c tests/minunit.h $(LIB) | $(BUILD)
 
 test: $(TESTS)
 	@set -e; for t in $(TESTS); do echo "== $$t"; $$t; done
+
+$(BUILD)/quickstart: examples/quickstart.c $(LIB) | $(BUILD)
+	$(CC) $(CFLAGS) $< $(LIB) -o $@
+
+example: $(BUILD)/quickstart
+	@$(BUILD)/quickstart
 
 $(BUILD)/bench: bench/bench.c $(LIB) | $(BUILD)
 	$(CC) $(CFLAGS) $< $(LIB) -o $@
