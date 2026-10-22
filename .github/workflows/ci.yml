@@ -1,0 +1,123 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Private repository on a Free plan: keep jobs few and short. Every job runs on ubuntu-latest.
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  # make test: gcc and clang, with and without ASan + UBSan, -Wall -Wextra -Werror (see Makefile WARN).
+  make-test:
+    name: make test (${{ matrix.cc }}, sanitizers=${{ matrix.san }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+        san: ["0", "1"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain versions
+        run: ${{ matrix.cc }} --version | head -1
+      - name: make test
+        run: make test CC=${{ matrix.cc }} SAN=${{ matrix.san }}
+
+  # Same sources through CMake + CTest (the supported way to consume the library from another project).
+  cmake:
+    name: cmake + ctest (${{ matrix.cc }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.cc }} -DDCDS_SANITIZE=ON
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install valgrind
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq valgrind
+      - name: make valgrind (leaks and invalid accesses are errors)
+        run: make valgrind CC=gcc
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cppcheck, clang-tidy, cmake
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq cppcheck clang-tidy cmake
+      - name: cppcheck
+        run: >
+          cppcheck --std=c11 --enable=warning,style,performance,portability
+          --inline-suppr --error-exitcode=1 --suppress=missingIncludeSystem
+          -Iinclude src tests bench
+      - name: clang-tidy (config in .clang-tidy, warnings are errors)
+        run: |
+          cmake -S . -B build-tidy -DCMAKE_C_COMPILER=clang >/dev/null
+          clang-tidy -p build-tidy --quiet src/*.c tests/*.c bench/*.c
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lcov
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lcov
+      - name: Run tests with gcov and summarise src/
+        run: |
+          make coverage | tee coverage.txt
+          lines="$(sed -n 's/.*lines\.*: *\([0-9.]*\)%.*/\1/p' coverage.txt)"
+          echo "Line coverage of src/: ${lines}%" | tee -a "$GITHUB_STEP_SUMMARY"
+          # Fail below 90 % line coverage (current value is recorded in the README).
+          awk -v c="$lines" 'BEGIN { exit (c + 0 >= 90.0) ? 0 : 1 }'
+      - name: Upload lcov data
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-src
+          path: build-cov/src.info
+
+  # Benchmarks: the only source of numbers quoted in the README. Output includes compiler, OS and CPU.
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run benchmarks
+        run: |
+          make bench CC=gcc | tee bench-gcc.md
+          make clean
+          make bench CC=clang | tee bench-clang.md
+          { cat bench-gcc.md; echo; cat bench-clang.md; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench-*.md
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks (pinned version, sha256 verified)
+        run: scripts/install-gitleaks.sh .bin
+      - name: Scan full git history
+        run: .bin/gitleaks detect --source . --no-banner --redact

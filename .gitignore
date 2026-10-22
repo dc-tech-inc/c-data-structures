@@ -6,4 +6,4 @@ build*/
 /bin/
 .bin/
 compile_commands.json
-bench-results.md
+bench-*.md
