@@ -90,7 +90,7 @@ jobs:
           # Fail below 90 % line coverage (current value is recorded in the README).
           awk -v c="$lines" 'BEGIN { exit (c + 0 >= 90.0) ? 0 : 1 }'
       - name: Upload lcov data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lcov-src
           path: build-cov/src.info
@@ -106,7 +106,7 @@ jobs:
           make clean
           make bench CC=clang | tee bench-clang.md
           { cat bench-gcc.md; echo; cat bench-clang.md; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bench-results
           path: bench-*.md
