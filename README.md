@@ -4,7 +4,7 @@
 ![codeql](https://github.com/dc-tech-inc/c-data-structures/actions/workflows/codeql.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-A small, documented C17 library of the data structures every C program ends up needing: **doubly linked list, dynamic array, string-keyed hash map, binary heap and AVL tree**. Built by **DCtech.** as an engineering reference: strict warnings, sanitizers, valgrind, static analysis, coverage and reproducible benchmarks are all enforced in CI, so every claim below has a check behind it.
+A small, documented C17 library of the data structures every C program ends up needing: doubly linked list, dynamic array, string-keyed hash map, binary heap and AVL tree. Built by DCtech. as an engineering reference: strict warnings, sanitizers, valgrind, static analysis, coverage and reproducible benchmarks are all enforced in CI, so every claim below has a check behind it.
 
 > No dependencies beyond libc. Not thread-safe. Not a replacement for a mature container library; read [Limitations](#limitations) first.
 
@@ -145,7 +145,7 @@ Measured by CI on the merge commit [`0025453`](https://github.com/dc-tech-inc/c-
 | avl get | N hits | 154.4 | 316.5 |
 | libc `qsort` | reference: sort the N keys once | 86.2 | 86.2 |
 
-How to read this honestly:
+Reading the numbers:
 - These are single runs on a shared virtual machine; the CPU model even changes between CI jobs (an earlier run of the same code landed on an EPYC 7763 with different numbers). Differences of tens of percent between rows or between compilers are within noise; orders of magnitude are not.
 - Vector and list items point into one pre-built array, and list nodes are allocated back to back, so their scans are friendlier to the cache than a long-lived, fragmented list would be.
 - `make bench` prints the same table with your machine and compiler in the header. The full output of each CI run is in its job summary and in the `bench-results` artifact.
