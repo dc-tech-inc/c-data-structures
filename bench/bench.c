@@ -285,7 +285,13 @@ static void print_environment(void)
         }
         fclose(f);
     }
-    printf("- Compiler: `%s`\n", __VERSION__);
+#if defined(__clang__)
+    printf("- Compiler: clang, `%s`\n", __clang_version__);
+#elif defined(__GNUC__)
+    printf("- Compiler: gcc, `%s`\n", __VERSION__);
+#else
+    printf("- Compiler: unknown\n");
+#endif
 #ifdef __OPTIMIZE__
     printf("- Optimised build: yes (`__OPTIMIZE__` defined)\n");
 #else
@@ -293,6 +299,10 @@ static void print_environment(void)
 #endif
 #if defined(__SANITIZE_ADDRESS__)
     printf("- Sanitizers: ON - numbers below are not representative\n");
+#elif defined(__has_feature)
+#if __has_feature(address_sanitizer)
+    printf("- Sanitizers: ON - numbers below are not representative\n");
+#endif
 #endif
     if (uname(&u) == 0) {
         printf("- OS: %s %s (%s)\n", u.sysname, u.release, u.machine);
