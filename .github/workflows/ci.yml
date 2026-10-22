@@ -28,7 +28,7 @@ jobs:
         cc: [gcc, clang]
         san: ["0", "1"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Toolchain versions
         run: ${{ matrix.cc }} --version | head -1
       - name: make test
@@ -43,7 +43,7 @@ jobs:
       matrix:
         cc: [gcc, clang]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure
         run: cmake -S . -B build -DCMAKE_C_COMPILER=${{ matrix.cc }} -DDCDS_SANITIZE=ON
       - name: Build
@@ -54,7 +54,7 @@ jobs:
   valgrind:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install valgrind
         run: sudo apt-get update -qq && sudo apt-get install -y -qq valgrind
       - name: make valgrind (leaks and invalid accesses are errors)
@@ -63,7 +63,7 @@ jobs:
   static-analysis:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install cppcheck, clang-tidy, cmake
         run: sudo apt-get update -qq && sudo apt-get install -y -qq cppcheck clang-tidy cmake
       - name: cppcheck
@@ -79,7 +79,7 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install lcov
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lcov
       - name: Run tests with gcov and summarise src/
@@ -99,7 +99,7 @@ jobs:
   bench:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run benchmarks
         run: |
           make bench CC=gcc | tee bench-gcc.md
@@ -114,7 +114,7 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install gitleaks (pinned version, sha256 verified)
