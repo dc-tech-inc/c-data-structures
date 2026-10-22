@@ -1,0 +1,35 @@
+name: codeql
+
+# CodeQL code scanning. It is free for public repositories; while this repository is
+# private on a Free plan the job is skipped instead of failing.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "41 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    if: github.event.repository.visibility == 'public'
+    name: analyze (c-cpp)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          build-mode: manual
+      - name: Build for the analysis
+        run: make all CC=gcc
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:c-cpp

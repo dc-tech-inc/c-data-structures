@@ -1,0 +1,15 @@
+# -clang-analyzer-security.insecureAPI.*: flags memcpy/snprintf and wants the optional C11 Annex K *_s functions, which glibc does not ship.
+# -bugprone-multi-level-implicit-pointer-conversion: `void **` -> `void *` for free()/realloc() is inherent to a container of void*.
+# -cert-err33-c: unchecked printf/snprintf results in tests and the benchmark are intentional.
+Checks: >
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-reserved-identifier,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  misc-redundant-expression,
+  performance-*,
+  portability-*
+WarningsAsErrors: '*'
+HeaderFilterRegex: '(include|src)/.*'
